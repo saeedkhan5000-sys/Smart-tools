@@ -60,7 +60,7 @@ export default function Navbar() {
               <button 
                 onMouseEnter={() => setIsToolsOpen(true)}
                 className={`flex items-center gap-1 px-4 py-2 rounded-xl text-sm font-bold tracking-tight transition-all hover:bg-slate-100 ${
-                  pathname.includes('/sip') || pathname.includes('/zakat') || pathname.includes('/time') 
+                  pathname?.includes('/sip') || pathname?.includes('/zakat') || pathname?.includes('/time') 
                   ? 'text-blue-600' : 'text-slate-600'
                 }`}
               >
