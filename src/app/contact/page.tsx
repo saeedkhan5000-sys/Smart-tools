@@ -1,96 +1,159 @@
 "use client";
 import React, { useState } from 'react';
-import { Mail, MessageSquare, Send, MapPin } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Mail, MessageSquare, Send, MapPin, Globe, CheckCircle2, Sparkles } from 'lucide-react';
 
 export default function ContactPage() {
   const [status, setStatus] = useState<string | null>(null);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Yahan aap Formspree ya kisi API ka link dal sakte hain
+    // Simulate API call
     setStatus("success");
   };
 
   return (
-    <main className="min-h-screen bg-gray-50 py-16 px-4">
-      <div className="max-w-5xl mx-auto">
-        <div className="grid md:grid-cols-2 gap-12 bg-white rounded-3xl shadow-xl overflow-hidden">
+    <main className="min-h-screen bg-[#F8FAFC] py-20 px-6 flex items-center justify-center">
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.98 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="max-w-6xl w-full mx-auto"
+      >
+        <div className="grid lg:grid-cols-5 gap-0 bg-white rounded-[3.5rem] shadow-[0_40px_100px_rgba(0,0,0,0.04)] border border-slate-100 overflow-hidden">
           
-          {/* Left Side: Contact Info */}
-          <div className="bg-blue-600 p-10 md:p-16 text-white flex flex-col justify-between">
-            <div>
-              <h1 className="text-4xl font-black mb-6">Get in Touch</h1>
-              <p className="text-blue-100 mb-10 text-lg">
-                Have a question about our calculators or want to suggest a new tool? We'd love to hear from you.
+          {/* Left Side: Contact Info (Takes 2 columns) */}
+          <div className="lg:col-span-2 bg-slate-900 p-10 md:p-16 text-white relative overflow-hidden flex flex-col justify-between">
+            {/* Background Decoration */}
+            <div className="absolute top-0 right-0 w-64 h-64 bg-blue-600/20 blur-[80px] rounded-full -mr-32 -mt-32" />
+            
+            <div className="relative z-10">
+              <motion.div 
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="inline-flex items-center gap-2 bg-blue-500/10 border border-blue-500/20 px-4 py-1.5 rounded-full text-[10px] font-black tracking-widest text-blue-400 uppercase mb-8"
+              >
+                <Sparkles size={14} /> Let's Connect
+              </motion.div>
+              
+              <h1 className="text-4xl md:text-5xl font-black mb-8 tracking-tighter leading-tight">
+                Get in <span className="text-blue-400">Touch</span>
+              </h1>
+              
+              <p className="text-slate-400 mb-12 text-lg font-medium leading-relaxed">
+                Have a question about our calculators or want to suggest a new tool? 
+                Our team usually responds within 24 hours.
               </p>
 
-              <div className="space-y-6">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center">
-                    <Mail size={24} />
-                  </div>
-                  <div>
-                    <p className="text-sm text-blue-200">Email us at</p>
-                    <p className="font-bold">saeedkhan5000@gmail.com</p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center">
-                    <MapPin size={24} />
-                  </div>
-                  <div>
-                    <p className="text-sm text-blue-200">Office</p>
-                    <p className="font-bold">Pakistan / Ghazi,KPK</p>
-                  </div>
-                </div>
+              <div className="space-y-8">
+                <ContactDetail 
+                  icon={<Mail size={20} />} 
+                  label="Email our support" 
+                  value="saeedkhan5000@gmail.com" 
+                />
+                <ContactDetail 
+                  icon={<MapPin size={20} />} 
+                  label="Headquarters" 
+                  value="Ghazi, KPK, Pakistan" 
+                />
+                <ContactDetail 
+                  icon={<Globe size={20} />} 
+                  label="Available" 
+                  value="Worldwide (24/7)" 
+                />
               </div>
             </div>
 
-            <div className="mt-12 p-6 bg-blue-700 rounded-2xl border border-blue-500">
-              <p className="text-sm italic text-blue-100">
-                "Financial freedom starts with a single step and the right tools."
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.5 }}
+              className="mt-16 p-6 bg-white/5 rounded-3xl border border-white/10 backdrop-blur-sm"
+            >
+              <p className="text-xs italic text-slate-300 font-medium leading-relaxed">
+                "Financial freedom starts with a single step and the right tools. We are here to help you take that step."
               </p>
-            </div>
+            </motion.div>
           </div>
 
-          {/* Right Side: Contact Form */}
-          <div className="p-10 md:p-16">
-            {status === "success" ? (
-              <div className="h-full flex flex-col items-center justify-center text-center space-y-4">
-                <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center">
-                  <Send size={40} />
-                </div>
-                <h2 className="text-2xl font-bold">Message Sent!</h2>
-                <p className="text-gray-500">Thank you for reaching out. We will get back to you within 24 hours.</p>
-                <button onClick={() => setStatus(null)} className="text-blue-600 font-bold underline">Send another message</button>
-              </div>
-            ) : (
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">Full Name</label>
-                  <input required type="text" placeholder="John Doe" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 outline-none transition" />
-                </div>
+          {/* Right Side: Contact Form (Takes 3 columns) */}
+          <div className="lg:col-span-3 p-10 md:p-20 bg-white flex flex-col justify-center">
+            <AnimatePresence mode="wait">
+              {status === "success" ? (
+                <motion.div 
+                  key="success"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  className="text-center space-y-6 py-10"
+                >
+                  <div className="w-24 h-24 bg-emerald-50 text-emerald-500 rounded-[2rem] flex items-center justify-center mx-auto shadow-inner">
+                    <CheckCircle2 size={48} />
+                  </div>
+                  <div className="space-y-2">
+                    <h2 className="text-3xl font-black text-slate-900 tracking-tight">Message Sent!</h2>
+                    <p className="text-slate-500 font-medium">Thank you for reaching out. We've received your inquiry.</p>
+                  </div>
+                  <button 
+                    onClick={() => setStatus(null)} 
+                    className="text-blue-600 font-black text-xs uppercase tracking-widest hover:underline"
+                  >
+                    Send another message
+                  </button>
+                </motion.div>
+              ) : (
+                <motion.form 
+                  key="form"
+                  onSubmit={handleSubmit}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="space-y-8"
+                >
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-slate-400 uppercase ml-1 tracking-widest">Full Name</label>
+                      <input required type="text" placeholder="John Doe" className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 text-sm font-bold text-slate-700 outline-none focus:bg-white focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 transition-all" />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-slate-400 uppercase ml-1 tracking-widest">Email Address</label>
+                      <input required type="email" placeholder="john@example.com" className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 text-sm font-bold text-slate-700 outline-none focus:bg-white focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 transition-all" />
+                    </div>
+                  </div>
 
-                <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">Email Address</label>
-                  <input required type="email" placeholder="john@example.com" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 outline-none transition" />
-                </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-400 uppercase ml-1 tracking-widest">Your Message</label>
+                    <textarea required rows={5} placeholder="Tell us how we can help..." className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 text-sm font-bold text-slate-700 outline-none focus:bg-white focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 transition-all resize-none"></textarea>
+                  </div>
 
-                <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">How can we help?</label>
-                  <textarea required rows={4} placeholder="Your message here..." className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 outline-none transition resize-none"></textarea>
-                </div>
-
-                <button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-4 rounded-xl shadow-lg shadow-blue-200 transition flex items-center justify-center gap-2">
-                  <MessageSquare size={20} /> SEND MESSAGE
-                </button>
-              </form>
-            )}
+                  <motion.button 
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    type="submit" 
+                    className="w-full bg-blue-600 hover:bg-slate-900 text-white font-black py-5 rounded-2xl shadow-xl shadow-blue-200 transition-all flex items-center justify-center gap-3 uppercase text-xs tracking-[0.2em]"
+                  >
+                    <Send size={18} /> Send Inquiry
+                  </motion.button>
+                </motion.form>
+              )}
+            </AnimatePresence>
           </div>
 
         </div>
-      </div>
+      </motion.div>
     </main>
+  );
+}
+
+// Helper Component
+function ContactDetail({ icon, label, value }: any) {
+  return (
+    <div className="flex items-center gap-5 group">
+      <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center text-blue-400 border border-white/10 group-hover:bg-blue-600 group-hover:text-white transition-all duration-300">
+        {icon}
+      </div>
+      <div>
+        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-0.5">{label}</p>
+        <p className="font-bold text-slate-200 tracking-tight">{value}</p>
+      </div>
+    </div>
   );
 }

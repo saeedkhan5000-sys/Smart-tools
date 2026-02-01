@@ -1,129 +1,205 @@
 "use client";
-import { useEffect, useState } from "react";
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Coins, Landmark, ArrowRight, Info, RotateCcw, Wallet, Moon, ChevronDown } from 'lucide-react';
 
-interface MetalData {
-  price: number; // price per ounce
-  currency: string;
-}
+const currencies = [
+  { label: 'USD', value: 'USD', symbol: '$', locale: 'en-US' },
+  { label: 'PKR', value: 'PKR', symbol: 'Rs', locale: 'en-PK' },
+  { label: 'INR', value: 'INR', symbol: '₹', locale: 'en-IN' },
+];
 
-export default function ZakatCalculator() {
+export default function ProfessionalZakatCalculator() {
   const [rates, setRates] = useState<{ gold: number; silver: number } | null>(null);
-  const [currency, setCurrency] = useState("USD");
-  
-  // Input States
+  const [currency, setCurrency] = useState(currencies[0]);
   const [goldGrams, setGoldGrams] = useState(0);
   const [silverGrams, setSilverGrams] = useState(0);
   const [cash, setCash] = useState({ usd: 0, pkr: 0, inr: 0 });
-  const [receivable, setReceivable] = useState(0); // Paisay jo lene hain
-  const [debts, setDebts] = useState(0); // Karza jo dena hai
-  
+  const [receivable, setReceivable] = useState(0);
+  const [debts, setDebts] = useState(0);
   const [totalZakat, setTotalZakat] = useState<number | null>(null);
+  const [isCalculated, setIsCalculated] = useState(false);
 
-  // Exchange Rates (Mock rates - ideally fetch these from an API)
   const exchangeRates: Record<string, number> = { USD: 1, PKR: 278, INR: 83 };
 
+  // --- API Integration ---
   useEffect(() => {
-    const fetchRates = async () => {
-      // Logic to fetch live gold/silver prices
-      // For demo, using static values: Gold $2000/oz, Silver $23/oz
-      setRates({ gold: 2000, silver: 23 });
+    const fetchLiveRates = async () => {
+      try {
+        const [goldRes, silverRes] = await Promise.all([
+          fetch('/pages/api/gold'),
+          fetch('/pages/api/silver')
+        ]);
+        const goldData = await goldRes.json();
+        const silverData = await silverRes.json();
+
+        if (goldData.price && silverData.price) {
+          setRates({ gold: goldData.price, silver: silverData.price });
+        }
+      } catch (err) {
+        console.error("Rates fetch error, using fallback:", err);
+        setRates({ gold: 2040, silver: 23.2 });
+      }
     };
-    fetchRates();
+    fetchLiveRates();
   }, []);
 
   const calculateZakat = () => {
     if (!rates) return;
-
     const ozToGram = 31.1035;
-    const goldPricePerGram = (rates.gold / ozToGram) * exchangeRates[currency];
-    const silverPricePerGram = (rates.silver / ozToGram) * exchangeRates[currency];
+    const goldPricePerGram = (rates.gold / ozToGram) * exchangeRates[currency.value];
+    const silverPricePerGram = (rates.silver / ozToGram) * exchangeRates[currency.value];
 
-    // Asset Calculations
     const goldValue = goldGrams * goldPricePerGram;
     const silverValue = silverGrams * silverPricePerGram;
-    const cashValue = (cash.usd * exchangeRates[currency]) + 
-                      (cash.pkr * (exchangeRates[currency] / exchangeRates["PKR"])) + 
-                      (cash.inr * (exchangeRates[currency] / exchangeRates["INR"]));
+    const cashValue = (cash.usd * exchangeRates[currency.value]) + 
+                      (cash.pkr * (exchangeRates[currency.value] / exchangeRates["PKR"])) + 
+                      (cash.inr * (exchangeRates[currency.value] / exchangeRates["INR"]));
 
     const totalAssets = goldValue + silverValue + cashValue + receivable;
     const netWealth = totalAssets - debts;
-
-    // Nisab Threshold (Silver basis: 612.36 grams)
     const nisabThreshold = 612.36 * silverPricePerGram;
 
-    if (netWealth >= nisabThreshold) {
-      setTotalZakat(netWealth * 0.025);
-    } else {
-      setTotalZakat(0);
-    }
+    setTotalZakat(netWealth >= nisabThreshold ? netWealth * 0.025 : 0);
+    setIsCalculated(true);
+  };
+
+  const formatValue = (val: number) => {
+    return new Intl.NumberFormat(currency.locale, {
+      style: 'currency', currency: currency.value, maximumFractionDigits: 0,
+    }).format(val);
   };
 
   return (
-    <div className="max-w-2xl mx-auto p-6 bg-white rounded-xl shadow-lg border border-emerald-100">
-      <h2 className="text-3xl font-bold mb-6 text-emerald-800 text-center">🕌 Advance Zakat Calculator</h2>
+    <div className="min-h-screen bg-[#f8fafc] p-4 md:p-10 font-sans">
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-5xl mx-auto">
+        <div className="bg-white rounded-[2.5rem] shadow-[0_20px_50px_rgba(15,118,110,0.07)] border border-slate-100 overflow-hidden">
+          
+          {/* Header */}
+          <div className="p-8 border-b border-slate-50 flex flex-col md:flex-row justify-between items-center gap-6 bg-emerald-50/20">
+            <div className="flex items-center gap-4">
+              <div className="bg-emerald-600 p-3 rounded-2xl shadow-lg shadow-emerald-200">
+                <Moon className="text-white fill-white" size={24} />
+              </div>
+              <div>
+                <h1 className="text-2xl font-black text-slate-800 tracking-tight">Zakat Portal</h1>
+                <p className="text-emerald-600 text-[10px] font-bold uppercase tracking-widest">Global Rates Integration</p>
+              </div>
+            </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-        {/* Currency Selection */}
-        <div className="md:col-span-2">
-          <label className="block text-sm font-medium mb-1">Calculation Currency</label>
-          <select 
-            className="w-full p-2 border rounded-md"
-            value={currency}
-            onChange={(e) => setCurrency(e.target.value)}
-          >
-            <option value="USD">USD ($)</option>
-            <option value="PKR">PKR (Rs)</option>
-            <option value="INR">INR (₹)</option>
-          </select>
-        </div>
+            <div className="flex bg-slate-200/50 p-1.5 rounded-2xl">
+              {currencies.map((curr) => (
+                <button
+                  key={curr.value}
+                  onClick={() => { setCurrency(curr); setIsCalculated(false); }}
+                  className={`px-6 py-2 rounded-xl text-xs font-bold transition-all ${
+                    currency.value === curr.value ? 'bg-white text-emerald-600 shadow-sm' : 'text-slate-500'
+                  }`}
+                >
+                  {curr.value}
+                </button>
+              ))}
+            </div>
+          </div>
 
-        {/* Metals */}
-        <div>
-          <label className="block text-sm font-medium">Gold (Grams)</label>
-          <input type="number" className="w-full p-2 border rounded" onChange={(e) => setGoldGrams(+e.target.value)} />
-        </div>
-        <div>
-          <label className="block text-sm font-medium">Silver (Grams)</label>
-          <input type="number" className="w-full p-2 border rounded" onChange={(e) => setSilverGrams(+e.target.value)} />
-        </div>
+          <div className="grid lg:grid-cols-2 gap-0">
+            {/* Form Section */}
+            <div className="p-8 space-y-8 border-r border-slate-50">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <section className="space-y-4">
+                  <h3 className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest"><Coins size={14} /> Metals</h3>
+                  <InputField label="Gold (Grams)" onChange={setGoldGrams} />
+                  <InputField label="Silver (Grams)" onChange={setSilverGrams} />
+                </section>
+                <section className="space-y-4">
+                  <h3 className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest"><Wallet size={14} /> Cash</h3>
+                  <InputField label="USD Savings" onChange={(v) => setCash({...cash, usd: v})} />
+                  <InputField label="Local Savings" onChange={(v) => currency.value === 'PKR' ? setCash({...cash, pkr: v}) : setCash({...cash, inr: v})} />
+                </section>
+              </div>
 
-        {/* Cash in different currencies */}
-        <div>
-          <label className="block text-sm font-medium">Cash (USD)</label>
-          <input type="number" className="w-full p-2 border rounded" onChange={(e) => setCash({...cash, usd: +e.target.value})} />
-        </div>
-        <div>
-          <label className="block text-sm font-medium">Cash (PKR)</label>
-          <input type="number" className="w-full p-2 border rounded" onChange={(e) => setCash({...cash, pkr: +e.target.value})} />
-        </div>
+              <section className="space-y-4 pt-4 border-t border-slate-50">
+                <h3 className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest"><Landmark size={14} /> Adjustments</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <InputField label="Receivables" onChange={setReceivable} />
+                  <InputField label="Total Debts" onChange={setDebts} />
+                </div>
+              </section>
 
-        {/* Debts & Receivables */}
-        <div>
-          <label className="block text-sm font-medium text-blue-600">Money Owed to You (Receivables)</label>
-          <input type="number" className="w-full p-2 border rounded" onChange={(e) => setReceivable(+e.target.value)} />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-red-600">Your Debts (Payables)</label>
-          <input type="number" className="w-full p-2 border rounded" onChange={(e) => setDebts(+e.target.value)} />
-        </div>
-      </div>
+              <motion.button
+                whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}
+                onClick={calculateZakat}
+                className="w-full bg-slate-900 hover:bg-emerald-700 text-white font-bold py-5 rounded-2xl shadow-xl flex items-center justify-center gap-2 transition-all"
+              >
+                Calculate Zakat Due <ArrowRight size={18} />
+              </motion.button>
+            </div>
 
-      <button
-        onClick={calculateZakat}
-        className="w-full bg-emerald-600 text-white font-bold py-3 rounded-lg hover:bg-emerald-700 transition"
-      >
-        Calculate My Zakat
-      </button>
+            {/* Results & Table Section */}
+            <div className="bg-slate-50/50 p-8 flex flex-col">
+              <AnimatePresence mode="wait">
+                {!isCalculated ? (
+                  <motion.div key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="m-auto text-center space-y-4 max-w-xs">
+                    <div className="w-16 h-16 bg-white rounded-2xl shadow-sm flex items-center justify-center mx-auto text-emerald-600"><Info size={28} /></div>
+                    <p className="text-slate-500 text-sm font-medium leading-relaxed">Please fill in your assets. Zakat is calculated at 2.5% of your net wealth if it exceeds Nisab.</p>
+                  </motion.div>
+                ) : (
+                  <motion.div key="result" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+                    <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-emerald-100 text-center">
+                      <p className="text-emerald-600 font-bold text-xs uppercase tracking-widest mb-2">Net Zakat Payable</p>
+                      <h2 className="text-5xl font-black text-slate-800 tracking-tighter">{formatValue(totalZakat!)}</h2>
+                    </div>
 
-      {totalZakat !== null && (
-        <div className="mt-6 p-4 bg-emerald-50 border-l-4 border-emerald-500 rounded">
-          <p className="text-emerald-700 font-medium">Total Zakat Due:</p>
-          <h3 className="text-2xl font-bold text-emerald-900">
-            {totalZakat > 0 ? `${totalZakat.toLocaleString()} ${currency}` : "You don't meet Nisab criteria."}
-          </h3>
-          <p className="text-xs text-emerald-600 mt-2">*Calculation based on Silver Nisab (612.36g)</p>
+                    {/* Breakdown Table */}
+                    <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+                      <div className="px-4 py-3 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
+                        <span className="text-[10px] font-black text-slate-500 uppercase">Asset Breakdown</span>
+                        <ChevronDown size={14} className="text-slate-400" />
+                      </div>
+                      <table className="w-full text-left text-xs">
+                        <tbody className="divide-y divide-slate-100">
+                          <AssetRow label="Metal Value" val={(goldGrams * ((rates?.gold || 0) / 31.1035) + silverGrams * ((rates?.silver || 0) / 31.1035)) * exchangeRates[currency.value]} sym={currency.symbol} />
+                          <AssetRow label="Cash Assets" val={(cash.usd * exchangeRates[currency.value]) + (cash.pkr * (exchangeRates[currency.value] / exchangeRates["PKR"])) + (cash.inr * (exchangeRates[currency.value] / exchangeRates["INR"]))} sym={currency.symbol} />
+                          <AssetRow label="Receivables" val={receivable} sym={currency.symbol} />
+                          <tr className="bg-red-50/30 text-red-500 italic">
+                            <td className="px-4 py-3">Total Liabilities</td>
+                            <td className="px-4 py-3 text-right">-{currency.symbol}{debts.toLocaleString()}</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+
+                    <button onClick={() => setIsCalculated(false)} className="w-full flex items-center justify-center gap-2 text-slate-400 hover:text-emerald-600 font-bold text-xs py-2 transition-colors">
+                      <RotateCcw size={14} /> Recalculate Assets
+                    </button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          </div>
         </div>
-      )}
+      </motion.div>
     </div>
+  );
+}
+
+// Sub-components
+function InputField({ label, onChange }: any) {
+  return (
+    <div className="space-y-1.5">
+      <label className="text-[10px] font-black text-slate-400 uppercase ml-1 tracking-tight">{label}</label>
+      <input type="number" onChange={(e) => onChange(Number(e.target.value))} placeholder="0.00"
+        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 outline-none focus:bg-white focus:border-emerald-500 transition-all" />
+    </div>
+  );
+}
+
+function AssetRow({ label, val, sym }: any) {
+  if (val <= 0) return null;
+  return (
+    <tr>
+      <td className="px-4 py-3 font-medium text-slate-500">{label}</td>
+      <td className="px-4 py-3 text-right font-bold text-slate-800">{sym}{Math.round(val).toLocaleString()}</td>
+    </tr>
   );
 }
