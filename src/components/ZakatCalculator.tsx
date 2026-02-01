@@ -3,7 +3,15 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Coins, Landmark, ArrowRight, Info, RotateCcw, Wallet, Moon, ChevronDown } from 'lucide-react';
 
-const currencies = [
+// --- Types Definition ---
+interface Currency {
+  label: string;
+  value: string;
+  symbol: string;
+  locale: string;
+}
+
+const currencies: Currency[] = [
   { label: 'USD', value: 'USD', symbol: '$', locale: 'en-US' },
   { label: 'PKR', value: 'PKR', symbol: 'Rs', locale: 'en-PK' },
   { label: 'INR', value: 'INR', symbol: '₹', locale: 'en-IN' },
@@ -11,7 +19,7 @@ const currencies = [
 
 export default function ProfessionalZakatCalculator() {
   const [rates, setRates] = useState<{ gold: number; silver: number } | null>(null);
-  const [currency, setCurrency] = useState(currencies[0]);
+  const [currency, setCurrency] = useState<Currency>(currencies[0]);
   const [goldGrams, setGoldGrams] = useState(0);
   const [silverGrams, setSilverGrams] = useState(0);
   const [cash, setCash] = useState({ usd: 0, pkr: 0, inr: 0 });
@@ -22,7 +30,6 @@ export default function ProfessionalZakatCalculator() {
 
   const exchangeRates: Record<string, number> = { USD: 1, PKR: 278, INR: 83 };
 
-  // --- API Integration ---
   useEffect(() => {
     const fetchLiveRates = async () => {
       try {
@@ -53,8 +60,8 @@ export default function ProfessionalZakatCalculator() {
     const goldValue = goldGrams * goldPricePerGram;
     const silverValue = silverGrams * silverPricePerGram;
     const cashValue = (cash.usd * exchangeRates[currency.value]) + 
-                      (cash.pkr * (exchangeRates[currency.value] / exchangeRates["PKR"])) + 
-                      (cash.inr * (exchangeRates[currency.value] / exchangeRates["INR"]));
+                      (cash.pkr * (exchangeRates[currency.value] / (exchangeRates["PKR"] || 278))) + 
+                      (cash.inr * (exchangeRates[currency.value] / (exchangeRates["INR"] || 83)));
 
     const totalAssets = goldValue + silverValue + cashValue + receivable;
     const netWealth = totalAssets - debts;
@@ -75,7 +82,6 @@ export default function ProfessionalZakatCalculator() {
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-5xl mx-auto">
         <div className="bg-white rounded-[2.5rem] shadow-[0_20px_50px_rgba(15,118,110,0.07)] border border-slate-100 overflow-hidden">
           
-          {/* Header */}
           <div className="p-8 border-b border-slate-50 flex flex-col md:flex-row justify-between items-center gap-6 bg-emerald-50/20">
             <div className="flex items-center gap-4">
               <div className="bg-emerald-600 p-3 rounded-2xl shadow-lg shadow-emerald-200">
@@ -103,26 +109,25 @@ export default function ProfessionalZakatCalculator() {
           </div>
 
           <div className="grid lg:grid-cols-2 gap-0">
-            {/* Form Section */}
             <div className="p-8 space-y-8 border-r border-slate-50">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <section className="space-y-4">
                   <h3 className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest"><Coins size={14} /> Metals</h3>
-                  <InputField label="Gold (Grams)" onChange={setGoldGrams} />
-                  <InputField label="Silver (Grams)" onChange={setSilverGrams} />
+                  <InputField label="Gold (Grams)" onChange={(v: number) => setGoldGrams(v)} />
+                  <InputField label="Silver (Grams)" onChange={(v: number) => setSilverGrams(v)} />
                 </section>
                 <section className="space-y-4">
                   <h3 className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest"><Wallet size={14} /> Cash</h3>
-                  <InputField label="USD Savings" onChange={(v) => setCash({...cash, usd: v})} />
-                  <InputField label="Local Savings" onChange={(v) => currency.value === 'PKR' ? setCash({...cash, pkr: v}) : setCash({...cash, inr: v})} />
+                  <InputField label="USD Savings" onChange={(v: number) => setCash({...cash, usd: v})} />
+                  <InputField label="Local Savings" onChange={(v: number) => currency.value === 'PKR' ? setCash({...cash, pkr: v}) : setCash({...cash, inr: v})} />
                 </section>
               </div>
 
               <section className="space-y-4 pt-4 border-t border-slate-50">
                 <h3 className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest"><Landmark size={14} /> Adjustments</h3>
                 <div className="grid grid-cols-2 gap-4">
-                  <InputField label="Receivables" onChange={setReceivable} />
-                  <InputField label="Total Debts" onChange={setDebts} />
+                  <InputField label="Receivables" onChange={(v: number) => setReceivable(v)} />
+                  <InputField label="Total Debts" onChange={(v: number) => setDebts(v)} />
                 </div>
               </section>
 
@@ -135,7 +140,6 @@ export default function ProfessionalZakatCalculator() {
               </motion.button>
             </div>
 
-            {/* Results & Table Section */}
             <div className="bg-slate-50/50 p-8 flex flex-col">
               <AnimatePresence mode="wait">
                 {!isCalculated ? (
@@ -150,19 +154,14 @@ export default function ProfessionalZakatCalculator() {
                       <h2 className="text-5xl font-black text-slate-800 tracking-tighter">{formatValue(totalZakat!)}</h2>
                     </div>
 
-                    {/* Breakdown Table */}
                     <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
-                      <div className="px-4 py-3 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
-                        <span className="text-[10px] font-black text-slate-500 uppercase">Asset Breakdown</span>
-                        <ChevronDown size={14} className="text-slate-400" />
-                      </div>
                       <table className="w-full text-left text-xs">
                         <tbody className="divide-y divide-slate-100">
-                          <AssetRow label="Metal Value" val={(goldGrams * ((rates?.gold || 0) / 31.1035) + silverGrams * ((rates?.silver || 0) / 31.1035)) * exchangeRates[currency.value]} sym={currency.symbol} />
-                          <AssetRow label="Cash Assets" val={(cash.usd * exchangeRates[currency.value]) + (cash.pkr * (exchangeRates[currency.value] / exchangeRates["PKR"])) + (cash.inr * (exchangeRates[currency.value] / exchangeRates["INR"]))} sym={currency.symbol} />
+                          <AssetRow label="Metal Value" val={(goldGrams * (((rates?.gold || 0) / 31.1035)) + silverGrams * (((rates?.silver || 0) / 31.1035))) * exchangeRates[currency.value]} sym={currency.symbol} />
+                          <AssetRow label="Cash Assets" val={(cash.usd * exchangeRates[currency.value]) + (cash.pkr * (exchangeRates[currency.value] / 278)) + (cash.inr * (exchangeRates[currency.value] / 83))} sym={currency.symbol} />
                           <AssetRow label="Receivables" val={receivable} sym={currency.symbol} />
                           <tr className="bg-red-50/30 text-red-500 italic">
-                            <td className="px-4 py-3">Total Liabilities</td>
+                            <td className="px-4 py-3 font-medium">Total Liabilities</td>
                             <td className="px-4 py-3 text-right">-{currency.symbol}{debts.toLocaleString()}</td>
                           </tr>
                         </tbody>
@@ -183,18 +182,33 @@ export default function ProfessionalZakatCalculator() {
   );
 }
 
-// Sub-components
-function InputField({ label, onChange }: any) {
+// --- Fixed Sub-components with Types ---
+interface InputFieldProps {
+  label: string;
+  onChange: (value: number) => void;
+}
+
+function InputField({ label, onChange }: InputFieldProps) {
   return (
     <div className="space-y-1.5">
       <label className="text-[10px] font-black text-slate-400 uppercase ml-1 tracking-tight">{label}</label>
-      <input type="number" onChange={(e) => onChange(Number(e.target.value))} placeholder="0.00"
-        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 outline-none focus:bg-white focus:border-emerald-500 transition-all" />
+      <input 
+        type="number" 
+        onChange={(e) => onChange(Number(e.target.value))} 
+        placeholder="0.00"
+        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 outline-none focus:bg-white focus:border-emerald-500 transition-all" 
+      />
     </div>
   );
 }
 
-function AssetRow({ label, val, sym }: any) {
+interface AssetRowProps {
+  label: string;
+  val: number;
+  sym: string;
+}
+
+function AssetRow({ label, val, sym }: AssetRowProps) {
   if (val <= 0) return null;
   return (
     <tr>
